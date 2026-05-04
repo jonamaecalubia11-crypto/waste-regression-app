@@ -20,13 +20,26 @@ def categorize(value):
 
 if st.button("Predict"):
 
-    # ⚠️ MUST MATCH TRAINING FEATURES (3 ONLY)
     input_data = np.array([[weight, item_count, moisture]])
 
-    prediction = model.predict(input_data)[0]
-    prediction = max(0, min(100, prediction))
+    st.write("Model expects:", model.n_features_in_)
+    st.write("Input shape:", input_data.shape)
 
-    category = categorize(prediction)
+    try:
+        prediction = model.predict(input_data)[0]
+        prediction = max(0, min(100, prediction))
 
-    st.success(f"Bin Status: {category}")
-    st.write(f"Predicted Fill Percent: {prediction:.2f}%")
+        def categorize(v):
+            if v < 30:
+                return "Empty"
+            elif v < 70:
+                return "Moderate"
+            else:
+                return "Full"
+
+        st.success(f"Bin Status: {categorize(prediction)}")
+        st.write(f"Predicted Fill Percent: {prediction:.2f}%")
+
+    except Exception as e:
+        st.error("Mismatch detected between model and input.")
+        st.write(str(e))
