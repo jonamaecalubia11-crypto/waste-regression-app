@@ -14,7 +14,6 @@ avg_moisture = st.number_input("Average Moisture (%)", min_value=0.0, max_value=
 days_since_collection = st.number_input("Days Since Collection", min_value=0, step=1)
 bin_fill_percent = st.number_input("Current Bin Fill (%)", min_value=0.0, max_value=100.0, step=0.1)
 
-# Prediction button
 if st.button("Predict Bin Level"):
     input_data = pd.DataFrame([{
         "weight_kg": weight_kg,
@@ -24,6 +23,8 @@ if st.button("Predict Bin Level"):
         "bin_fill_percent": bin_fill_percent
     }])
 
-    prediction = model.predict(input_data)[0]
+    # Align with model’s expected feature names
+    input_data = input_data[model.feature_names_in_]
 
+    prediction = model.predict(input_data)[0]
     st.success(f"Predicted Bin Fill Level: {prediction:.2f}%")
