@@ -1,39 +1,34 @@
 import streamlit as st
+import numpy as np
 import joblib
-import pandas as pd
 
-# Load trained model
+# Load model + transformer
 model = joblib.load("model.pkl")
+poly = joblib.load("poly.pkl")
 
-st.title("Smart Bin Prediction App")
+st.title("♻️ Waste Bin Fill Predictor")
 
-# Input fields
-weight_kg = st.number_input("Weight (kg)", min_value=0.0, step=0.1)
-item_count = st.number_input("Item Count", min_value=0, step=1)
-avg_moisture = st.number_input("Average Moisture (%)", min_value=0.0, max_value=100.0, step=0.1)
-days_since_collection = st.number_input("Days Since Collection", min_value=0, step=1)
-bin_fill_percent = st.number_input("Current Bin Fill (%)", min_value=0.0, max_value=100.0, step=0.1)
+st.write("Enter waste bin data:")
 
-if st.button("Predict Bin Level"):
-    input_data = pd.DataFrame([{
-        "weight_kg": weight_kg,
-        "item_count": item_count,
-        "avg_moisture": avg_moisture,
-        "days_since_collection": days_since_collection,
-        "bin_fill_percent": bin_fill_percent
-    }])
+weight = st.number_input("Weight (kg)", min_value=0.0)
+item_count = st.number_input("Item Count", min_value=0)
+moisture = st.number_input("Average Moisture (0-1)", min_value=0.0, max_value=1.0)
+days = st.number_input("Days Since Collection", min_value=0)
 
-    # Align with model’s expected feature names
-    input_data = input_data[model.feature_names_in_]
-
-    prediction = model.predict(input_data)[0]
-
-    st.success(f"Predicted Bin Fill Level: {prediction:.2f}%")
-
-    # Indication report
-    if prediction < 30:
-        st.info("Status: Bin is relatively empty. Collection not urgent.")
-    elif 30 <= prediction < 70:
-        st.warning("Status: Bin is moderately filled. Monitor closely.")
+def categorize(value):
+    if value < 30:
+        return "Empty"
+    elif value < 70:
+        return "Moderate"
     else:
-        st.error("Status: Bin is nearly full. Collection recommended soon!")
+        return "Full"
+
+if st.button("Predict"):
+    input_data = np.array([[weight, item_count, moisture, days]])
+    input_poly = poly.transform(input_data)
+
+    prediction = model.predict(input_poly)[0]
+    category = categorize(prediction)
+
+    st.success(f"Bin Status: {category}")
+    st.write(f"Predicted Fill Percent: {prediction:.2f}%")
