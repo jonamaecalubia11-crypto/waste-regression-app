@@ -27,4 +27,13 @@ if st.button("Predict Bin Level"):
     input_data = input_data[model.feature_names_in_]
 
     prediction = model.predict(input_data)[0]
+
     st.success(f"Predicted Bin Fill Level: {prediction:.2f}%")
+
+    # Indication report
+    if prediction < 30:
+        st.info("Status: Bin is relatively empty. Collection not urgent.")
+    elif 30 <= prediction < 70:
+        st.warning("Status: Bin is moderately filled. Monitor closely.")
+    else:
+        st.error("Status: Bin is nearly full. Collection recommended soon!")
