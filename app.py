@@ -11,24 +11,22 @@ weight = st.number_input("Weight (kg)", min_value=0.0)
 item_count = st.number_input("Item Count", min_value=0)
 moisture = st.number_input("Average Moisture (0-1)", min_value=0.0, max_value=1.0)
 
-def categorize(value):
-    if value < 30:
+def categorize(v):
+    if v < 30:
         return "Empty"
-    elif value < 70:
+    elif v < 70:
         return "Moderate"
     else:
         return "Full"
 
 if st.button("Predict"):
 
-    # MUST match training (3 features)
     input_data = np.array([[weight, item_count, moisture]])
 
-    # transform to 15 features
     input_poly = poly.transform(input_data)
 
     prediction = model.predict(input_poly)[0]
     prediction = max(0, min(100, prediction))
 
     st.success(f"Bin Status: {categorize(prediction)}")
-    st.write(f"Predicted Fill Percent: {prediction:.2f}%")
+    st.write(f"Fill Percent: {prediction:.2f}%")
