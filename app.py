@@ -3,6 +3,7 @@ import numpy as np
 import joblib
 
 model = joblib.load("model.pkl")
+poly = joblib.load("poly.pkl")
 
 st.title("♻️ Waste Bin Fill Predictor")
 
@@ -20,26 +21,14 @@ def categorize(value):
 
 if st.button("Predict"):
 
+    # MUST match training (3 features)
     input_data = np.array([[weight, item_count, moisture]])
 
-    st.write("Model expects:", model.n_features_in_)
-    st.write("Input shape:", input_data.shape)
+    # transform to 15 features
+    input_poly = poly.transform(input_data)
 
-    try:
-        prediction = model.predict(input_data)[0]
-        prediction = max(0, min(100, prediction))
+    prediction = model.predict(input_poly)[0]
+    prediction = max(0, min(100, prediction))
 
-        def categorize(v):
-            if v < 30:
-                return "Empty"
-            elif v < 70:
-                return "Moderate"
-            else:
-                return "Full"
-
-        st.success(f"Bin Status: {categorize(prediction)}")
-        st.write(f"Predicted Fill Percent: {prediction:.2f}%")
-
-    except Exception as e:
-        st.error("Mismatch detected between model and input.")
-        st.write(str(e))
+    st.success(f"Bin Status: {categorize(prediction)}")
+    st.write(f"Predicted Fill Percent: {prediction:.2f}%")
