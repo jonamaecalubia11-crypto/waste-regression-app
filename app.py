@@ -2,7 +2,7 @@ import streamlit as st
 import numpy as np
 import joblib
 
-# Load model + transformer
+# Load model + poly safely
 model = joblib.load("model.pkl")
 poly = joblib.load("poly.pkl")
 
@@ -24,11 +24,26 @@ def categorize(value):
         return "Full"
 
 if st.button("Predict"):
-    input_data = np.array([[weight, item_count, moisture, days]])
-    input_poly = poly.transform(input_data)
 
-    prediction = model.predict(input_poly)[0]
-    category = categorize(prediction)
+    # IMPORTANT FIX: force correct shape + type
+    input_data = np.array([[float(weight), float(item_count), float(moisture), float(days)]])
 
-    st.success(f"Bin Status: {category}")
-    st.write(f"Predicted Fill Percent: {prediction:.2f}%")
+    try:
+        # transform safely
+        input_poly = poly.transform(input_data)
+
+        # predict
+        prediction = model.predict(input_poly)[0]
+
+        # safety clamp (prevents weird values from breaking categories)
+        prediction = max(0, min(100, prediction))
+
+        category = categorize(prediction)
+
+        st.success(f"Bin Status: {category}")
+        st.write(f"Predicted Fill Percent: {prediction:.2f}%")
+
+    except Exception as e:
+        st.error("Prediction failed due to model mismatch.")
+        st.write("Error details:", str(e))
+        st.stop()
