@@ -2,31 +2,35 @@ import streamlit as st
 import numpy as np
 import joblib
 
+# Load model and polynomial transformer
 model = joblib.load("model.pkl")
 poly = joblib.load("poly.pkl")
 
-st.title("♻️ Waste Bin Fill Predictor")
+# App title
+st.title("♻️ Waste Bin Fill Level Predictor")
 
-weight = st.number_input("Weight (kg)", min_value=0.0)
-item_count = st.number_input("Item Count", min_value=0)
-moisture = st.number_input("Average Moisture (0-1)", min_value=0.0, max_value=1.0)
+st.write("Enter the waste data below:")
 
-def categorize(v):
-    if v < 30:
-        return "Empty"
-    elif v < 70:
-        return "Moderate"
-    else:
-        return "Full"
+# User Inputs
+weight = st.number_input("Weight (kg)", min_value=0.0, value=1.0)
+item_count = st.number_input("Item Count", min_value=0, value=1)
+moisture = st.slider("Average Moisture (0 - 1)", 0.0, 1.0, 0.5)
+days = st.number_input("Days Since Collection", min_value=0, value=1)
 
-if st.button("Predict"):
+# Predict button
+if st.button("Predict Fill Level"):
+    try:
+        # Prepare input (MUST be 2D and 4 features)
+        input_data = np.array([[weight, item_count, moisture, days]])
 
-    input_data = np.array([[weight, item_count, moisture]])
+        # Transform using PolynomialFeatures
+        input_poly = poly.transform(input_data)
 
-    input_poly = poly.transform(input_data)
+        # Predict
+        prediction = model.predict(input_poly)[0]
 
-    prediction = model.predict(input_poly)[0]
-    prediction = max(0, min(100, prediction))
+        # Output result
+        st.success(f"Predicted Fill Level: {prediction:.2f}%")
 
-    st.success(f"Bin Status: {categorize(prediction)}")
-    st.write(f"Fill Percent: {prediction:.2f}%")
+    except Exception as e:
+        st.error(f"Error: {e}")
